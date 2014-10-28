@@ -63,8 +63,8 @@ def writeCatalog(catalogName,header, mag, position):
     f = open(catalogName,"w")
     f.write(header)
     counter = 0
-    for ra, dec in position:
-        f.write('object ' + str(counter) +' '+ str(position[0]) +' '+ str(position[1]) + ' ' + str(mag[counter]))
+    for (ra, dec) in position:
+        f.write('object ' + str(counter) +' '+ str(ra) +' '+ str(dec) + ' ' + str(mag[counter]))
         f.write(' ../sky/sed_flat.txt 0 0 0 0 0 0 star none none\n')
         counter+=1
     f.close()
@@ -101,8 +101,8 @@ if __name__=='__main__':
 
     position = getGrid(180-2.5,180+2.5, 0-2.5, 0+2.5, 0.003,0.003)
     #plotStars(position)
-    plotChip(pointing_RA,pointing_DEC)
-    plt.show()
+    #plotChip(pointing_RA,pointing_DEC)
+    #plt.show()
     #magnitude = genMagnitudeList(num, 18,3.0)
     #magnitude = np.random.uniform(18,20,num)
     magnitude = [18]*len(position)
