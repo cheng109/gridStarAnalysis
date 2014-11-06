@@ -27,7 +27,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class Star:
-    def __init__(self, ID, sex_CenterX, sex_CenterY, sex_RA, sex_DEC, data, wcs, origin, windows):
+    def __init__(self, ID, sex_CenterX, sex_CenterY, sex_RA, sex_DEC, data, wcs, origin, windows, e):
         self.winX =windows[0]
         self.winY =windows[1]
 
@@ -42,6 +42,20 @@ class Star:
 
         self.RA_grid = 0
         self.DEC_grid = 0
+
+        self.psfSize=0
+
+        self.X2=e[0]
+        self.Y2=e[1]
+        self.XY=e[2]
+        #self.sex_ellipticity=e[3]
+
+
+        self.e1 = (self.X2-self.Y2)/(self.X2+self.Y2)
+        self.e2 = 2*self.XY/(self.X2+self.Y2)
+        self.sex_ellipticity= np.sqrt(self.e1**2+self.e2**2)
+        self.sex_FWHM = e[4]
+
 
         self.moffat_A = 0
         self.moffat_B = 0
@@ -58,6 +72,9 @@ class Star:
         self.moffat_red_chi_square = 0
         self.moffat_beta = 0
 
+
+    def update_ellpticity(self):
+        print "haha"
 
     def print_star(self):
         print("ID=", self.ID)
@@ -142,15 +159,19 @@ def generateStarList(fitsFileName, catFileName, (winX, winY), (limX, limY), Moff
             sex_CenterY = float(temp[2])
             sex_RA  = float(temp[3])
             sex_DEC = float(temp[4])
+            sex_X2 = float(temp[5])
+            sex_Y2 = float(temp[6])
+            sex_XY = float(temp[7])
+            sex_elipticity = float(temp[8])
+            sex_FWHM = float(temp[10])
+            e = (sex_X2, sex_Y2, sex_XY, sex_elipticity, sex_FWHM)
             if sex_CenterY>limY[0] and sex_CenterY< limY[1] and sex_CenterX>limX[0] and sex_CenterX < limX[1]:
-
-
 
                 data = image_map[np.floor(sex_CenterY-winY):np.floor(sex_CenterY+winY)+1,np.floor(sex_CenterX-winX):np.floor(sex_CenterX+winX)+1]
                 origin = (np.floor(sex_CenterY)-winY, np.floor(sex_CenterX)-winX)
 
 
-                star = Star(ID, sex_CenterX, sex_CenterY, sex_RA, sex_DEC, data, wcs, origin, (winX, winY))
+                star = Star(ID, sex_CenterX, sex_CenterY, sex_RA, sex_DEC, data, wcs, origin, (winX, winY), e)
                 if Moffat==True:
                     star.update_moffat()
 
@@ -160,15 +181,20 @@ def generateStarList(fitsFileName, catFileName, (winX, winY), (limX, limY), Moff
     return starList
 
 
-def generateStarListDictionary(fitsNameList, (winX, winY), (xlim, ylim), sex, Moffat ):
+def generateStarListDictionary(fitsNameList, (winX, winY), (xlim, ylim), sex, Moffat, dir=None ):
     keys = fitsNameList
     starDict = dict.fromkeys(keys)
     for i in range(len(fitsNameList)):
         fitsName = fitsNameList[i]
-        catName = fitsName[:-5] +"_sex.cat"
+        if dir!=None:
+            fullFitsName = str(dir)+fitsNameList[i]
+            catName = str(dir)+fitsName[:-5] +"_sex.cat"
+        else:
+            fullFitsName = fitsNameList[i]
+            catName = fitsName[:-5] +"_sex.cat"
         if sex ==True:
-            subprocess.call("sex " + fitsName + " -CATALOG_NAME " + catName, shell=True)
-        starList= generateStarList(fitsName, catName, (winX, winY), (xlim, ylim), Moffat)
+            subprocess.call("sex " + fullFitsName + " -CATALOG_NAME " + catName, shell=True)
+        starList= generateStarList(fullFitsName, catName, (winX, winY), (xlim, ylim), Moffat)
         starDict[fitsName] = starList
     return starDict
 

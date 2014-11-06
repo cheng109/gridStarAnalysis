@@ -22,7 +22,6 @@ import star_list
 import numpy as np
 import sys
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
 
 def angle_distance(A, B):
     A[:] = [x/180*np.pi for x in A]
