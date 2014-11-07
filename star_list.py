@@ -45,16 +45,21 @@ class Star:
 
         self.psfSize=0
 
-        self.X2=e[0]
-        self.Y2=e[1]
-        self.XY=e[2]
-        #self.sex_ellipticity=e[3]
+        self.sex_X2=e[0]
+        self.sex_Y2=e[1]
+        self.sex_XY=e[2]
 
-
-        self.e1 = (self.X2-self.Y2)/(self.X2+self.Y2)
-        self.e2 = 2*self.XY/(self.X2+self.Y2)
-        self.sex_ellipticity= np.sqrt(self.e1**2+self.e2**2)
+        self.sex_e1 = (self.sex_X2-self.sex_Y2)/(self.sex_X2+self.sex_Y2)
+        self.sex_e2 = 2*self.sex_XY/(self.sex_X2+self.sex_Y2)
+        self.sex_ellipticity= np.sqrt(self.sex_e1**2+self.sex_e2**2)
         self.sex_FWHM = e[4]
+
+        self.mine_X2=0
+        self.mine_Y2=0
+        self.mine_XY=0
+        self.mine_e1 =0
+        self.mine_e2 =0
+        self.mine_ellipticity= 0
 
 
         self.moffat_A = 0
@@ -73,11 +78,19 @@ class Star:
         self.moffat_beta = 0
 
 
-    def update_ellpticity(self):
-        print "haha"
-
-    def print_star(self):
-        print("ID=", self.ID)
+    def update_mine_ellpticity(self):
+        sumAll = np.sum(self.data)
+        for i in range(self.data.shape[0]):
+            for j in range(self.data.shape[1]):
+                self.mine_X2 += self.data[i][j]*i*i
+                self.mine_Y2 += self.data[i][j]*j*j
+                self.mine_XY += self.data[i][j]*i*j
+        self.mine_X2 =self.mine_X2/sumAll
+        self.mine_Y2 =self.mine_Y2/sumAll
+        self.mine_XY =self.mine_XY/sumAll
+        self.mine_e1 = (self.mine_X2-self.mine_Y2)/(self.mine_X2+self.mine_Y2)
+        self.mine_e2 = (2*self.mine_XY)/(self.mine_X2+self.mine_Y2)
+        self.mine_ellipticity = np.sqrt(self.mine_e1**2 + self.mine_e2**2)
 
     def update_wcs(self):
         self.moffat_RA, self.moffat_DEC = self.wcs.all_pix2world(self.moffat_global_CenterX,self.moffat_global_CenterY,0)
@@ -108,6 +121,12 @@ class Star:
         self.moffat_global_CenterX = self.origin[1] + self.moffat_CenterY
         self.moffat_global_CenterY = self.origin[0] + self.moffat_CenterX
 
+
+    def update(self,Moffat, Ellipticity):
+        if Ellipticity==True:
+            self.update_mine_ellpticity()
+        if Moffat==True:
+            self.update_moffat()
 
     def plotFitting(self):
 
@@ -143,7 +162,8 @@ class Star:
         #plt.close()
 
 
-def generateStarList(fitsFileName, catFileName, (winX, winY), (limX, limY), Moffat):
+
+def generateStarList(fitsFileName, catFileName, (winX, winY), (limX, limY), Moffat, Ellipticity):
     starList=[]
     catFile=open(catFileName,'r')
     imgFile = fits.open(fitsFileName)
@@ -172,16 +192,14 @@ def generateStarList(fitsFileName, catFileName, (winX, winY), (limX, limY), Moff
 
 
                 star = Star(ID, sex_CenterX, sex_CenterY, sex_RA, sex_DEC, data, wcs, origin, (winX, winY), e)
-                if Moffat==True:
-                    star.update_moffat()
-
+                star.update(Moffat, Ellipticity)
                 starList.append(star)
 
     catFile.close()
     return starList
 
 
-def generateStarListDictionary(fitsNameList, (winX, winY), (xlim, ylim), sex, Moffat, dir=None ):
+def generateStarListDictionary(fitsNameList, (winX, winY), (xlim, ylim), sex, Moffat, Ellipticity, dir=None ):
     keys = fitsNameList
     starDict = dict.fromkeys(keys)
     for i in range(len(fitsNameList)):
@@ -194,7 +212,7 @@ def generateStarListDictionary(fitsNameList, (winX, winY), (xlim, ylim), sex, Mo
             catName = fitsName[:-5] +"_sex.cat"
         if sex ==True:
             subprocess.call("sex " + fullFitsName + " -CATALOG_NAME " + catName, shell=True)
-        starList= generateStarList(fullFitsName, catName, (winX, winY), (xlim, ylim), Moffat)
+        starList= generateStarList(fullFitsName, catName, (winX, winY), (xlim, ylim), Moffat, Ellipticity)
         starDict[fitsName] = starList
     return starDict
 
