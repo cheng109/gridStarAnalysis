@@ -6,6 +6,7 @@ import star_list
 import cor
 import e_map
 import matplotlib.pylab as plt
+import plotLib
 
 def do_compareSEX(starListDict):
     i=0
@@ -28,6 +29,9 @@ def do_compareSEX(starListDict):
    # plt.hist(error)
     plt.show()
 
+
+
+
 if __name__=='__main__':
     spacing = 0.003    # unit degree
     freq = 4
@@ -39,9 +43,11 @@ if __name__=='__main__':
                                                         sex=False,
                                                         Moffat=False,
                                                         Ellipticity=False,
-                                                        dir="data/defect_ON_atm_ON/") #with ending '/'
-    #cor.writeOutAllStars(starListDict, "star_info.txt")
+                                                        dir="data/defect_OFF_atm_ON/") #with ending '/'
+    #cor.do_writeOutAllStars(starListDict, "star_info_OFF_ON.txt")
 
-    cor.do_correlatin(starListDict, spacing, freq=freq)
+    #cor.do_correlatin(starListDict, spacing, freq=freq)
     #do_compareSEX(starListDict)
+
+    plotLib.plotEllipticityMap(starListDict,spacing,freq=6)
     print "completely done ! "

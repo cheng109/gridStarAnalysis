@@ -16,15 +16,11 @@ def update_grid(starListDict, spacing):
             starList[i].RA_grid=int(np.round((starList[i].sex_RA-temp_RA)/spacing))
             starList[i].DEC_grid=int(np.round((starList[i].sex_DEC-temp_DEC)/spacing))
             #plt.plot(starList[i].RA_grid, starList[i].DEC_grid, '*b')
-    #plt.axis('equal')
-    #plt.show()
-
-
 
 def mergeAllStarList(starListDict):
     mergedDict_RA = {}
     mergedDict_DEC = {}
-
+    newDict = {}
     for key, starList in starListDict.items():
         for star in starList:
             if star.RA_grid not in mergedDict_RA:
@@ -33,19 +29,20 @@ def mergeAllStarList(starListDict):
                 mergedDict_DEC[star.DEC_grid]=[]
             mergedDict_RA[star.RA_grid].append(star)
             mergedDict_DEC[star.DEC_grid].append(star)
+            newDict[(star.RA_grid, star.DEC_grid)] = star
+
 
     mergedDict = {}
     mergedDict['ra']=mergedDict_RA
     mergedDict['dec']=mergedDict_DEC
+    mergedDict['both']=newDict
     return mergedDict
 
 
-def createDistanceList(mergedDict, direction='ra', freq=4):
+def createDistanceList(indexDict, direction, freq=4):
 
     cov = []
     unit = []
-    indexDict=mergedDict[direction]
-
     if direction=='ra':
         for RA_grid, starList in indexDict.items():
             if np.remainder(RA_grid, freq)==0:
@@ -64,6 +61,7 @@ def createDistanceList(mergedDict, direction='ra', freq=4):
                         B = starList[j]
                         cov.append(A.sex_e1*B.sex_e1 + A.sex_e2*B.sex_e2)
                         unit.append(int(abs(B.RA_grid - A.RA_grid)))
+
 
     x=list(set(unit))
     mean = [0]*len(x)
@@ -90,7 +88,7 @@ def writeToFile(x, cov, outFileName):
     f.close()
 
 
-def writeOutAllStars(starListDict, outFileName):
+def do_writeOutAllStars(starListDict, outFileName):
     f=open(outFileName, 'w')
     for key, value in starListDict.items():
         for star in value:
@@ -110,9 +108,8 @@ def writeOutAllStars(starListDict, outFileName):
 def do_correlatin(starListDict, spacing, freq):
     update_grid(starListDict, spacing)
     print "updating grids done ! "
-    mergedDict = mergeAllStarList(starListDict)
-    print "merging dictionary done !"
-    x,mean = createDistanceList(mergedDict, direction='dec', freq=freq)
+    mergedDict = mergeAllStarList(starListDict,)
+    x,mean = createDistanceList(mergedDict, direction="dec",freq=freq)
     x[:]=[a*spacing*60.0 for a in x]   # convert the unit to be arcmin.
     plotCorrelation(x, mean)
     writeToFile(x, mean, "outputFile.txt")

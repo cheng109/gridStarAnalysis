@@ -122,7 +122,7 @@ class Star:
         self.moffat_global_CenterY = self.origin[0] + self.moffat_CenterX
 
 
-    def update(self,Moffat, Ellipticity):
+    def update(self, Moffat, Ellipticity):
         if Ellipticity==True:
             self.update_mine_ellpticity()
         if Moffat==True:
