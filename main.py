@@ -3,10 +3,11 @@ __author__ = 'cheng109'
 
 import sys
 import star_list
-import cor
-import e_map
+import tools
+import numpy as np
 import matplotlib.pylab as plt
-import plotLib
+import time, threading
+import pickle
 
 def do_compareSEX(starListDict):
     i=0
@@ -31,23 +32,44 @@ def do_compareSEX(starListDict):
 
 
 
+def writeStarInfo(starListDict, outFile):
+    f = open(outFile, 'w')
+    for key, starList in starListDict.items():
+        for star in starList:
+            info= star.star_info()
+            for i in info:
+                f.write(i +"\t")
+            f.write("\n")
+    f.close()
+
+
+
 
 if __name__=='__main__':
-    spacing = 0.003    # unit degree
-    freq = 4
-    winX=12
-    winY=12
-    xlim = [20,4000-20]
-    ylim = [20,4000-20]
-    starListDict = star_list.generateStarListDictionary(sys.argv[1:], (winX, winY), (xlim, ylim),
-                                                        sex=False,
-                                                        Moffat=False,
-                                                        Ellipticity=False,
-                                                        dir="data/defect_OFF_atm_ON/") #with ending '/'
-    #cor.do_writeOutAllStars(starListDict, "star_info_OFF_ON.txt")
+    starListDict ={}
+    threadList = []
+    spacing = 0.003*4    # unit degree
+    freq = 1
+    winX=80
+    winY=80
+    xlim = [100,16000-100]
+    ylim = [100,16288-100]
 
-    #cor.do_correlatin(starListDict, spacing, freq=freq)
-    #do_compareSEX(starListDict)
+    #xlim = [10,4000-10]
+    #ylim = [10,4000-10]
 
-    plotLib.plotEllipticityMap(starListDict,spacing,freq=6)
-    print "completely done ! "
+    DIR="/Volumes/HD3/data/CCD_ATM_OPTICS/ccd_OFF_atm_ON_perturbation/"
+    #DIR="/Users/cheng109/work/source/gridStarAnalysis/gridstaranalysis/data/defect_ON_atm_ON/"
+    start_time=time.time()
+    fileList = tools.genFileNameList("OFF_ON_perturbation_fileList.txt")
+
+    starListDict =star_list.generateStarListDictionary(fileList, (winX, winY), (xlim, ylim),
+                                                       sex=True,
+                                                       Moffat=False,
+                                                       Ellipticity=False,
+                                                       dir=DIR) #with ending '/'
+
+
+    tools.do_correlatin(starListDict,DIR+"correlation.txt", spacing, freq=freq)
+    writeStarInfo(starListDict, DIR+"star-info-out.txt")
+    print "Initial Time usage: " + str(time.time()-start_time)

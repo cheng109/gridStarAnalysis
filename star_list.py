@@ -25,6 +25,9 @@ from astropy.wcs import WCS
 from aspylib import astro
 import numpy as np
 import matplotlib.pyplot as plt
+import time
+import threading
+
 
 class Star:
     def __init__(self, ID, sex_CenterX, sex_CenterY, sex_RA, sex_DEC, data, wcs, origin, windows, e):
@@ -51,6 +54,9 @@ class Star:
 
         self.sex_e1 = (self.sex_X2-self.sex_Y2)/(self.sex_X2+self.sex_Y2)
         self.sex_e2 = 2*self.sex_XY/(self.sex_X2+self.sex_Y2)
+        #self.sex_e1 = (self.sex_X2-self.sex_Y2+self.sex_CenterX**2-self.sex_CenterY**2)/(self.sex_X2+self.sex_Y2+self.sex_CenterX**2+self.sex_CenterY**2)
+        #self.sex_e2 = 2*(self.sex_XY+self.sex_CenterY*self.sex_CenterX)/(self.sex_X2+self.sex_Y2+self.sex_CenterX**2+self.sex_CenterY**2)
+
         self.sex_ellipticity= np.sqrt(self.sex_e1**2+self.sex_e2**2)
         self.sex_FWHM = e[4]
 
@@ -77,6 +83,14 @@ class Star:
         self.moffat_red_chi_square = 0
         self.moffat_beta = 0
 
+    def star_info(self):
+        info = [self.ID, self.RA_grid, self.DEC_grid,
+                self.sex_X2, self.sex_Y2, self.sex_XY,
+                self.sex_e1, self.sex_e2,self.sex_ellipticity,self.sex_FWHM,
+                self.moffat_CenterX, self.moffat_CenterY, self.moffat_smallest_fwhm, self.moffat_largest_fwhm, self.moffat_phi, self.moffat_ellipticity,
+                ]
+        info_str =  [str(i) for i in info]
+        return info_str
 
     def update_mine_ellpticity(self):
         sumAll = np.sum(self.data)
@@ -123,6 +137,7 @@ class Star:
 
 
     def update(self, Moffat, Ellipticity):
+        #self.update_mine_ellpticity()
         if Ellipticity==True:
             self.update_mine_ellpticity()
         if Moffat==True:
@@ -199,9 +214,12 @@ def generateStarList(fitsFileName, catFileName, (winX, winY), (limX, limY), Moff
     return starList
 
 
+
+
 def generateStarListDictionary(fitsNameList, (winX, winY), (xlim, ylim), sex, Moffat, Ellipticity, dir=None ):
     keys = fitsNameList
     starDict = dict.fromkeys(keys)
+    threadList =[]
     for i in range(len(fitsNameList)):
         fitsName = fitsNameList[i]
         if dir!=None:
@@ -214,12 +232,12 @@ def generateStarListDictionary(fitsNameList, (winX, winY), (xlim, ylim), sex, Mo
             subprocess.call("sex " + fullFitsName + " -CATALOG_NAME " + catName, shell=True)
         starList= generateStarList(fullFitsName, catName, (winX, winY), (xlim, ylim), Moffat, Ellipticity)
         starDict[fitsName] = starList
+
+
     return starDict
 
-if __name__=="__main__":
-    winX=10
-    winY=10
-    #windows = (winX, winY)
-    xlim = [60,40000-60]
-    ylim = [30,600-60]
-    dict = generateStarListDictionary(sys.argv[1:],(winX, winY), (xlim, ylim), sex=True, Moffat=False)
+
+
+
+
+
