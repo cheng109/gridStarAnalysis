@@ -48,28 +48,28 @@ def writeStarInfo(starListDict, outFile):
 if __name__=='__main__':
     starListDict ={}
     threadList = []
-    spacing = 0.003*4    # unit degree
-    freq = 1
-    winX=80
-    winY=80
-    xlim = [100,16000-100]
-    ylim = [100,16288-100]
+    spacing = 0.003    # unit degree
+    freq = 4
+    winX=10
+    winY=10
+    #xlim = [100,16000-100]
+    #ylim = [100,16288-100]
 
-    #xlim = [10,4000-10]
-    #ylim = [10,4000-10]
+    xlim = [10,4000-10]
+    ylim = [10,4000-10]
 
-    DIR="/Volumes/HD3/data/CCD_ATM_OPTICS/ccd_OFF_atm_ON_perturbation/"
-    #DIR="/Users/cheng109/work/source/gridStarAnalysis/gridstaranalysis/data/defect_ON_atm_ON/"
+    #DIR="/Volumes/HD3/data/CCD_ATM_OPTICS/ccd_ON_atm_ON/"
+    DIR="/Users/cheng109/work/source/gridStarAnalysis/gridstaranalysis/data/defect_ON_atm_ON/"
     start_time=time.time()
-    fileList = tools.genFileNameList("OFF_ON_perturbation_fileList.txt")
+    fileList = tools.genFileNameList("stripeList_ON_ON.txt")
 
     starListDict =star_list.generateStarListDictionary(fileList, (winX, winY), (xlim, ylim),
-                                                       sex=True,
+                                                       sex=False,
                                                        Moffat=False,
                                                        Ellipticity=False,
                                                        dir=DIR) #with ending '/'
 
 
-    tools.do_correlatin(starListDict,DIR+"correlation.txt", spacing, freq=freq)
-    writeStarInfo(starListDict, DIR+"star-info-out.txt")
+    tools.do_correlatin(starListDict,DIR+"correlation_RA.txt", spacing, freq=freq)
+    writeStarInfo(starListDict, DIR+"star-info-out_RA.txt")
     print "Initial Time usage: " + str(time.time()-start_time)

@@ -54,6 +54,9 @@ class Star:
 
         self.sex_e1 = (self.sex_X2-self.sex_Y2)/(self.sex_X2+self.sex_Y2)
         self.sex_e2 = 2*self.sex_XY/(self.sex_X2+self.sex_Y2)
+
+        self.sex_correct_e1=0
+        self.sex_correct_e2=0
         #self.sex_e1 = (self.sex_X2-self.sex_Y2+self.sex_CenterX**2-self.sex_CenterY**2)/(self.sex_X2+self.sex_Y2+self.sex_CenterX**2+self.sex_CenterY**2)
         #self.sex_e2 = 2*(self.sex_XY+self.sex_CenterY*self.sex_CenterX)/(self.sex_X2+self.sex_Y2+self.sex_CenterX**2+self.sex_CenterY**2)
 
@@ -87,6 +90,7 @@ class Star:
         info = [self.ID, self.RA_grid, self.DEC_grid,
                 self.sex_X2, self.sex_Y2, self.sex_XY,
                 self.sex_e1, self.sex_e2,self.sex_ellipticity,self.sex_FWHM,
+                self.sex_correct_e1, self.sex_correct_e2,
                 self.moffat_CenterX, self.moffat_CenterY, self.moffat_smallest_fwhm, self.moffat_largest_fwhm, self.moffat_phi, self.moffat_ellipticity,
                 ]
         info_str =  [str(i) for i in info]

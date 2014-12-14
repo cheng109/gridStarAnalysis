@@ -7,6 +7,36 @@ import matplotlib.pyplot as plt
 import astrometric_error as astro_error
 
 
+def poly_correct_ellipticity(mergedDict,freq):
+    e1 = []
+    e2 = []
+    X =[]
+    Y =[]
+    newDict = {}
+    for (RA_grid, DEC_grid), star in mergedDict["both"].items():
+        if np.remainder(RA_grid, freq)==0 and np.remainder(DEC_grid, freq)==0:
+            newDict[(RA_grid,DEC_grid)]=star
+            e1.append(star.sex_e1)
+            e2.append(star.sex_e2)
+            X.append(star.sex_RA)
+            Y.append(star.sex_DEC)
+    num=len(X)
+    X=np.array(X)
+    Y=np.array(Y)
+    v = np.array([np.ones(num), X, Y, X*X, X*Y, Y*Y, X*X*X, X*X*Y,X*Y*Y, Y*Y*Y, X*X*X*X, X*X*X*Y, X*X*Y*Y,X*Y*Y*Y,Y*Y*Y*Y])
+    coX, resid_1, rank_1, singval_1 = np.linalg.lstsq(v.T, e1)
+    coY, resid_2, rank_2, singval_2 = np.linalg.lstsq(v.T, e2)
+    return coX, coY
+
+
+def get_correct_sex(star, coX, coY):
+    X = star.sex_RA
+    Y = star.sex_DEC
+    star.sex_correct_e1 = star.sex_e1 - np.dot(coX, [1, X, Y, X*X, X*Y, Y*Y, X*X*X, X*X*Y,X*Y*Y, Y*Y*Y, X*X*X*X, X*X*X*Y, X*X*Y*Y,X*Y*Y*Y,Y*Y*Y*Y])
+    star.sex_correct_e2 = star.sex_e2 - np.dot(coY, [1, X, Y, X*X, X*Y, Y*Y, X*X*X, X*X*Y,X*Y*Y, Y*Y*Y, X*X*X*X, X*X*X*Y, X*X*Y*Y,X*Y*Y*Y,Y*Y*Y*Y])
+    return star
+
+
 def genFileNameList(listFile):
     fileList = []
     infile = open(listFile,'r')
@@ -54,34 +84,57 @@ def mergeAllStarList(starListDict):
     return mergedDict
 
 
-def createDistanceList(indexDict, direction, freq=4):
+def createDistanceList(mergedDict, direction, freq=4, polyCorrect=True):
     cov = []
     unit = []
+    if polyCorrect==True:
+        coX, coY= poly_correct_ellipticity(mergedDict, freq)
+
     if direction=='ra':
-        for RA_grid, starList in indexDict['ra'].items():
+        for RA_grid, starList in mergedDict['ra'].items():
             if np.remainder(RA_grid, freq)==0:
                 for i in range(len(starList)-1):
                     for j in range(i+1, len(starList)):
                         A = starList[i]
                         B = starList[j]
-                        cov.append(A.sex_e1*B.sex_e1 + A.sex_e2*B.sex_e2)
+                        if polyCorrect==True:
+                            new_A = get_correct_sex(A, coX, coY)
+                            new_B = get_correct_sex(B, coX, coY)
+                            A_e1 = new_A.sex_correct_e1
+                            A_e2 = new_A.sex_correct_e2
+                            B_e1 = new_B.sex_correct_e1
+                            B_e2 = new_B.sex_correct_e2
+                        else:
+                            A_e1 = A.sex_correct_e1
+                            A_e2 = A.sex_correct_e2
+                            B_e1 = B.sex_correct_e1
+                            B_e2 = B.sex_correct_e2
+                        cov.append(A_e1*B_e1 + A_e2*B_e2)
                         unit.append(int(abs(B.DEC_grid - A.DEC_grid)))
     count =0
     if direction=='dec':
-        for DEC_grid, starList in indexDict['dec'].items():
+        for DEC_grid, starList in mergedDict['dec'].items():
             if np.remainder(DEC_grid, freq)==0:
                 for i in range(len(starList)-1):
                     for j in range(i+1, len(starList)):
                         A = starList[i]
                         B = starList[j]
-                        cov.append(A.sex_e1*B.sex_e1 + A.sex_e2*B.sex_e2)
-                        #cov.append(A.mine_e1*B.mine_e1 + A.mine_e2*B.mine_e2)
+                        if polyCorrect==True:
+                            new_A = get_correct_sex(A, coX, coY)
+                            new_B = get_correct_sex(B, coX, coY)
+                            A_e1 = new_A.sex_correct_e1
+                            A_e2 = new_A.sex_correct_e2
+                            B_e1 = new_B.sex_correct_e1
+                            B_e2 = new_B.sex_correct_e2
+                        else:
+                            A_e1 = A.sex_correct_e1
+                            A_e2 = A.sex_correct_e2
+                            B_e1 = B.sex_correct_e1
+                            B_e2 = B.sex_correct_e2
+                        cov.append(A_e1*B_e1 + A_e2*B_e2)
                         unit.append(int(abs(B.RA_grid - A.RA_grid)))
-                        if unit[-1]==191:
-                            count +=1
-                            print "haha"
 
-    print "count = ", count
+
     x=sorted(list(set(unit)))
 
     min_d = min(unit)
@@ -113,9 +166,9 @@ def do_correlatin(starListDict, outputFile, spacing, freq):
     update_grid(starListDict, spacing)
     print "updating grids done ! "
     mergedDict = mergeAllStarList(starListDict)
-    x,cov = createDistanceList(mergedDict, direction="dec",freq=freq)
+    x,cov = createDistanceList(mergedDict, direction="correct",freq=freq, polyCorrect=True)
     x[:]=[a*spacing*60.0/4 for a in x]   # convert the unit to be arcmin.
-    #plotCorrelation(x, cov)
+    plotCorrelation(x, cov)
     writeToFile(x, cov, outputFile)
 
 
